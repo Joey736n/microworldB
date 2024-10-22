@@ -1,4 +1,4 @@
-# NAME(S): [PLACE YOUR NAME(S) HERE]
+# NAME(S): Joe Binette
 #
 # APPROACH: [WRITE AN OVERVIEW OF YOUR APPROACH HERE.]
 #     Please use multiple lines (< ~80-100 char) for you approach write-up.
@@ -9,6 +9,7 @@
 #     of your approach.
 
 import random
+import navigation
 
 
 class AI:
@@ -18,6 +19,8 @@ class AI:
         to initialize any data or data structures you need.
         """
         self.turn = -1
+        self.ai_map = navigation.Map()
+        self.current_path = []
 
     def update(self, percepts, msg):
         """
@@ -47,9 +50,39 @@ class AI:
 
         print(f"A received the message: {msg}")
 
-        match percepts['X'][0]:
-            case '0' | '1' | 'r' | 'b':
-                return 'U', None
-            case _:
-                return random.choice(['N', 'S', 'E', 'W']), "A moving"
+# If exit is within percepts, AI ceases intelligent behavior.
+        if "r" in percepts["N"]:
+            return "N"
+        if "r" in percepts["E"]:
+            return "E"
+        if "r" in percepts["S"]:
+            return "S"
+        if "r" in percepts["W"]:
+            return "W"
+        if percepts["X"][0] == "r":
+            return "U"
+        
+		# Uses percepts to add to map.
+        self.ai_map.scan(percepts)
+        # Figures out which tiles to prioritize.
+        self.ai_map.add_frontier()
+        # Displays the map.
+        self.ai_map.print_map()
+        # If the AI is out of directions to follow, it will generate a new set.
+        if not self.current_path:
+            self.current_path = self.ai_map.discover()
+        # Displays diagnostic information.
+        print(f"Path to next frontier: {self.current_path}")
+        print(f"Current coordinates: {self.ai_map.robot_location}")
+        # Selects the foremost direction from its current path and adjusts its position accordingly.
+        d = self.current_path.pop(0)
+        if d == "N":
+            self.ai_map.robot_location.y -= 1
+        elif d == "E":
+            self.ai_map.robot_location.x += 1
+        elif d == "S":
+            self.ai_map.robot_location.y += 1
+        elif d == "W":
+            self.ai_map.robot_location.x -= 1
+        return d, None
     

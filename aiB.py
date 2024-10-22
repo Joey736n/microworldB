@@ -1,4 +1,4 @@
-# NAME(S): [PLACE YOUR NAME(S) HERE]
+# NAME(S): Joe Binette
 #
 # APPROACH: [WRITE AN OVERVIEW OF YOUR APPROACH HERE.]
 #     Please use multiple lines (< ~80-100 char) for you approach write-up.
@@ -52,4 +52,4 @@ class AI:
             case '0' | '1' | 'r' | 'b':
                 return 'U', None
             case _:
-                return random.choice(['N', 'S', 'E', 'W']), "B moving"    
+                return "U", "B moving"    
