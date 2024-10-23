@@ -71,12 +71,10 @@ class Map(object):
         self.map_height: int = 1
         self.map_width: int = 1
         self.tile_map = [[Unknown_Tile()]] # This is the 2D array that stores the bulk of mapping information.
-        self.robot_location: Coordinates = Coordinates(0, 0) # Keeps track of the AI's position.
-        self.frontier_tiles = [] # Keeps track of tiles that may lead to new space being mapped.
 
 	# Expands self.tile_map along the x axis in either direction.
     # Negative values expand West, positive values expand East.
-    def expand_x(self, distance: int):
+    def expand_x(self, distance: int, current_bot_position):
         for index, row in enumerate(self.tile_map):
             # Case for postive values. Expands the map East by {distance} tiles.
             if distance > 0:
@@ -86,12 +84,12 @@ class Map(object):
                 self.tile_map[index] = ([Unknown_Tile()] * abs(distance)) + row
         # Corrects the robot's position if the map was expanded on the West.
         if distance < 0:
-            self.robot_location.x += abs(distance)
+            current_bot_position.x += abs(distance)
         self.map_width += abs(distance)
 
 	# Expands self.tile_map along the y axis in either direction.
     # Negative values expand North, positve values expand South.
-    def expand_y(self, distance: int):
+    def expand_y(self, distance: int, current_bot_position):
         new_space = []
         # Prepares the tiles that will be added to the map.
         for i in range(abs(distance)):
@@ -103,7 +101,7 @@ class Map(object):
         elif distance < 0:
             self.tile_map = new_space + self.tile_map
             # Corrects the robots position if map was expanded north.
-            self.robot_location.y += abs(distance)
+            current_bot_position.y += abs(distance)
         self.map_height += abs(distance)
     
 	# Prints the map in an easy to read format.
@@ -127,9 +125,9 @@ class Map(object):
             return Teleporter_Tile(character)
     
     # Adds newly discovered tiles to the map. This one's a whopper.
-    def scan(self, percepts):
-        robot_x = self.robot_location.x
-        robot_y = self.robot_location.y
+    def scan(self, percepts, current_bot_position):
+        robot_x = current_bot_position.x
+        robot_y = current_bot_position.y
         self.tile_map[robot_y][robot_x] = self.charToTile(percepts["X"][0])
         # x_distance are the distance from where the robot is to the edge of the map.
         north_distance = robot_y
@@ -143,8 +141,8 @@ class Map(object):
         tile_placement_offset = 0
         for i in percepts["N"]:
             tile_placement_offset -= 1
-            if isinstance(self.tile_map[self.robot_location.y + tile_placement_offset][self.robot_location.x], Unknown_Tile):
-                self.tile_map[self.robot_location.y + tile_placement_offset][self.robot_location.x] = self.charToTile(i)
+            if isinstance(self.tile_map[current_bot_position.y + tile_placement_offset][current_bot_position.x], Unknown_Tile):
+                self.tile_map[current_bot_position.y + tile_placement_offset][current_bot_position.x] = self.charToTile(i)
         # Checks if expanding East is necessary, and expands if needed.
         if len(percepts["E"]) > east_distance:
             self.expand_x(len(percepts["E"]) - east_distance)
@@ -152,8 +150,8 @@ class Map(object):
         tile_placement_offset = 0
         for i in percepts["E"]:
             tile_placement_offset += 1
-            if isinstance(self.tile_map[self.robot_location.y][self.robot_location.x + tile_placement_offset], Unknown_Tile):
-                self.tile_map[self.robot_location.y][self.robot_location.x + tile_placement_offset] = self.charToTile(i)
+            if isinstance(self.tile_map[current_bot_position.y][current_bot_position.x + tile_placement_offset], Unknown_Tile):
+                self.tile_map[current_bot_position.y][current_bot_position.x + tile_placement_offset] = self.charToTile(i)
         # Checks if expanding South is necessary, and expands if needed.
         if len(percepts["S"]) > south_distance:
             self.expand_y(len(percepts["S"]) - south_distance)
@@ -161,8 +159,8 @@ class Map(object):
         tile_placement_offset = 0
         for i in percepts["S"]:
             tile_placement_offset += 1
-            if isinstance(self.tile_map[self.robot_location.y + tile_placement_offset][self.robot_location.x], Unknown_Tile):
-                self.tile_map[self.robot_location.y + tile_placement_offset][self.robot_location.x] = self.charToTile(i)
+            if isinstance(self.tile_map[current_bot_position.y + tile_placement_offset][current_bot_position.x], Unknown_Tile):
+                self.tile_map[current_bot_position.y + tile_placement_offset][current_bot_position.x] = self.charToTile(i)
         # Checks if expanding West is necessary, and expands if needed.
         if len(percepts["W"]) > west_distance:
             self.expand_x(west_distance - len(percepts["W"]))
@@ -170,8 +168,8 @@ class Map(object):
         tile_placement_offset = 0
         for i in percepts["W"]:
             tile_placement_offset -= 1
-            if isinstance(self.tile_map[self.robot_location.y][self.robot_location.x + tile_placement_offset], Unknown_Tile):
-                self.tile_map[self.robot_location.y][self.robot_location.x + tile_placement_offset] = self.charToTile(i)
+            if isinstance(self.tile_map[current_bot_position.y][current_bot_position.x + tile_placement_offset], Unknown_Tile):
+                self.tile_map[current_bot_position.y][current_bot_position.x + tile_placement_offset] = self.charToTile(i)
                 
 	# Checks grass tiles to see if they qualify as frontiers. Changes their status based on result.
     def add_frontier(self):
@@ -187,11 +185,11 @@ class Map(object):
                         tile.frontier = False
 
     # Returns a list containing the path to the nearest frontier tile.
-    def discover(self):
+    def discover(self, current_bot_position):
         previous_coords = {} # Keeps track of the previous tiles the search has seen alongside their coordinates.
         coord_path = [] # The list of coordinates that lead to a frontier.
-        coord_queue = [Coordinates(self.robot_location.x, self.robot_location.y)] # The coordinates that will be checked and expanded from.
-        previous_coords[self.tile_map[self.robot_location.y][self.robot_location.x]] = None # Since the search starts from where the robot is, None indicates that it is not expanded from any tile.
+        coord_queue = [Coordinates(current_bot_position.x, current_bot_position.y)] # The coordinates that will be checked and expanded from.
+        previous_coords[self.tile_map[current_bot_position.y][current_bot_position.x]] = None # Since the search starts from where the robot is, None indicates that it is not expanded from any tile.
         while coord_queue:
             current_coords = coord_queue.pop(0) # Takes the coordinates from the front of the queue.
             # If those coordinates are at a frontier tile, the loop is exited with the current coords still saved.
@@ -246,5 +244,9 @@ class NavigationManager(object):
         for i in range(self.NUM_BOTS):
             self.bot_coordinates.append(WorldCoordinates(0, 0, 0))
         self.current_bot = 0
-        self.current_map = 0
         self.maps = [Map()]
+        b_portal_location = None
+        o_portal_location = None
+        p_portal_location = None
+        y_portal_location = None
+        exit_tile_location = None
