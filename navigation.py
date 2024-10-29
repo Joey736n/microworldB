@@ -137,7 +137,7 @@ class Map(object):
 		west_distance = robot_x
 		# Checks if expanding North is necessary, and expands if needed.
 		if len(percepts["N"]) > north_distance:
-			self.expand_y(north_distance - len(percepts["N"]))
+			self.expand_y(north_distance - len(percepts["N"]), current_bot_position)
 		# Places tiles in a row starting from the robot's position.
 		tile_placement_offset = 0
 		for i in percepts["N"]:
@@ -146,7 +146,7 @@ class Map(object):
 				self.tile_map[current_bot_position.y + tile_placement_offset][current_bot_position.x] = self.charToTile(i)
 		# Checks if expanding East is necessary, and expands if needed.
 		if len(percepts["E"]) > east_distance:
-			self.expand_x(len(percepts["E"]) - east_distance)
+			self.expand_x(len(percepts["E"]) - east_distance, current_bot_position)
 		# Places tiles in a row starting from the robot's position.
 		tile_placement_offset = 0
 		for i in percepts["E"]:
@@ -155,7 +155,7 @@ class Map(object):
 				self.tile_map[current_bot_position.y][current_bot_position.x + tile_placement_offset] = self.charToTile(i)
 		# Checks if expanding South is necessary, and expands if needed.
 		if len(percepts["S"]) > south_distance:
-			self.expand_y(len(percepts["S"]) - south_distance)
+			self.expand_y(len(percepts["S"]) - south_distance, current_bot_position)
 		# Places tiles in a row starting from the robot's position.
 		tile_placement_offset = 0
 		for i in percepts["S"]:
@@ -164,7 +164,7 @@ class Map(object):
 				self.tile_map[current_bot_position.y + tile_placement_offset][current_bot_position.x] = self.charToTile(i)
 		# Checks if expanding West is necessary, and expands if needed.
 		if len(percepts["W"]) > west_distance:
-			self.expand_x(west_distance - len(percepts["W"]))
+			self.expand_x(west_distance - len(percepts["W"]), current_bot_position)
 		# Places tiles in a row starting from the robot's position.
 		tile_placement_offset = 0
 		for i in percepts["W"]:
@@ -235,15 +235,17 @@ class Map(object):
 	
 class WorldCoordinates(Coordinates):
 	def __init__(self, world: int, x: int, y: int):
-		super(x, y)
+		super().__init__(x, y)
 		self.world = world
 
 class NavigationManager(object):
 	def __init__(self):
 		self.NUM_BOTS = 2
 		self.bot_coordinates = []
+		self.bot_paths = []
 		for i in range(self.NUM_BOTS):
 			self.bot_coordinates.append(WorldCoordinates(0, 0, 0))
+			self.bot_paths.append([])
 		self.current_bot = 0
 		self.maps = [Map()]
 		unique_tile_locations = {"b": None, "o": None, "p": None, "y": None, "r": None}
@@ -252,7 +254,7 @@ class NavigationManager(object):
 		current_bot_coordinates = self.bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
-		current_map.scan(percepts, current_bot_coordinates)
+		self.bot_paths[self.current_bot] = current_map.scan(percepts, current_bot_coordinates)
 		# check percepts to find exits or portals here, and set the matching dictionary entry.
 		# for goal tiles, try to make it replace the current route for the AI.
 		
@@ -260,7 +262,7 @@ class NavigationManager(object):
 		current_bot_coordinates = self.bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
-		current_map.discover(current_bot_coordinates)
+		return current_map.discover(current_bot_coordinates)
 		
 	def add_frontier(self):
 		current_bot_coordinates = self.bot_coordinates[self.current_bot]
@@ -272,6 +274,21 @@ class NavigationManager(object):
 		for map_id, i in enumerate(self.maps):
 			print(f"Map #{map_id}")
 			i.print_map()
+
+	def next_direction(self):
+		if not self.bot_paths[self.current_bot]:
+			self.bot_paths[self.current_bot] = self.discover()
+			return self.next_direction()
+		d = self.bot_paths[self.current_bot].pop(0)
+		if d == "N":
+			self.bot_coordinates[self.current_bot].y -= 1
+		elif d == "E":
+			self.bot_coordinates[self.current_bot].x += 1
+		elif d == "S":
+			self.bot_coordinates[self.current_bot].y += 1
+		elif d == "W":
+			self.bot_coordinates[self.current_bot].x -= 1
+		return d
 	
 	def swap_bot(self):
 		self.current_bot = (self.current_bot + 1) % self.NUM_BOTS

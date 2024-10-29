@@ -19,8 +19,8 @@ class AI:
         to initialize any data or data structures you need.
         """
         self.turn = -1
-        self.ai_map = navigation.Map()
-        self.current_path = []
+        self.ai_map = navigation.NavigationManager()
+        # self.current_path = []
 
     def update(self, percepts, msg):
         """
@@ -67,22 +67,14 @@ class AI:
         # Figures out which tiles to prioritize.
         self.ai_map.add_frontier()
         # Displays the map.
-        self.ai_map.print_map()
+        self.ai_map.print_maps()
         # If the AI is out of directions to follow, it will generate a new set.
-        if not self.current_path:
-            self.current_path = self.ai_map.discover()
+        # if not self.current_path:
+        #     self.current_path = self.ai_map.discover()
         # Displays diagnostic information.
-        print(f"Path to next frontier: {self.current_path}")
-        print(f"Current coordinates: {self.ai_map.robot_location}")
+        # print(f"Path to next frontier: {self.current_path}")
+        # print(f"Current coordinates: {self.ai_map.robot_location}")
         # Selects the foremost direction from its current path and adjusts its position accordingly.
-        d = self.current_path.pop(0)
-        if d == "N":
-            self.ai_map.robot_location.y -= 1
-        elif d == "E":
-            self.ai_map.robot_location.x += 1
-        elif d == "S":
-            self.ai_map.robot_location.y += 1
-        elif d == "W":
-            self.ai_map.robot_location.x -= 1
+        d = self.ai_map.next_direction()
         return d, None
     
