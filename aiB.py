@@ -9,6 +9,7 @@
 #     of your approach.
 
 import random
+import navigation
 
 
 class AI:
@@ -17,6 +18,7 @@ class AI:
         Called once before the sim starts. You may use this function
         to initialize any data or data structures you need.
         """
+        self.wait = True
         self.turn = -1
 
     def update(self, percepts, msg):
@@ -43,13 +45,44 @@ class AI:
 
         The same goes for goal hexes (0, 1, 2, 3, 4, 5, 6, 7, 8, 9).
         """
+        print(f"message: {msg}")
 
-        print(f"B received the message: {msg}")
+        if msg:
+            self.ai_map = msg
+
+        if self.wait and percepts["X"][0] != "r":
+            self.wait = False
+            self.ai_map.swap_bot()
+            return "U", self.ai_map
 
         self.turn += 1
 
-        match percepts['X'][0]:
-            case '0' | '1' | 'r' | 'b':
-                return 'U', None
-            case _:
-                return "U", "B moving"    
+        if "r" in percepts["N"]:
+            return "N", self.ai_map
+        if "r" in percepts["E"]:
+            return "E", self.ai_map
+        if "r" in percepts["S"]:
+            return "S", self.ai_map
+        if "r" in percepts["W"]:
+            return "W", self.ai_map
+        if percepts["X"][0] == "r":
+            return "U", self.ai_map
+        
+		# Uses percepts to add to map.
+        self.ai_map.scan(percepts)
+        # Figures out which tiles to prioritize.
+        self.ai_map.add_frontier()
+        # Displays the map.
+        self.ai_map.print_map()
+        # If the AI is out of directions to follow, it will generate a new set.
+        # if not self.current_path:
+        #     self.current_path = self.ai_map.discover()
+        # Displays diagnostic information.
+        # print(f"Path to next frontier: {self.current_path}")
+        # print(f"Current coordinates: {self.ai_map.robot_location}")
+        # Selects the foremost direction from its current path and adjusts its position accordingly.
+        d = self.ai_map.next_direction()
+        self.ai_map.swap_bot()
+        return d, self.ai_map
+    
+	# when the map expands, it needs to update all agent locations, plus the unique tile locations

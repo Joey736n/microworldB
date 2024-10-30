@@ -85,7 +85,9 @@ class Map(object):
 				self.tile_map[index] = ([Unknown_Tile()] * abs(distance)) + row
 		# Corrects the robot's position if the map was expanded on the West.
 		if distance < 0:
-			current_bot_position.x += abs(distance)
+			for i in bot_coordinates:
+				if current_bot_position.world == i.world:
+					i.x += abs(distance)
 		self.map_width += abs(distance)
 
 	# Expands self.tile_map along the y axis in either direction.
@@ -102,7 +104,9 @@ class Map(object):
 		elif distance < 0:
 			self.tile_map = new_space + self.tile_map
 			# Corrects the robots position if map was expanded north.
-			current_bot_position.y += abs(distance)
+			for i in bot_coordinates:
+				if current_bot_position.world == i.world:
+					i.y += abs(distance)
 		self.map_height += abs(distance)
 	
 	# Prints the map in an easy to read format.
@@ -237,21 +241,26 @@ class WorldCoordinates(Coordinates):
 	def __init__(self, world: int, x: int, y: int):
 		super().__init__(x, y)
 		self.world = world
+	
+	def __str__(self):
+		return f"(w:{self.world}, x:{self.x}, y:{self.y})"
+
+unique_tile_locations = {"b": None, "o": None, "p": None, "y": None, "r": None}
+bot_coordinates = []
 
 class NavigationManager(object):
 	def __init__(self):
 		self.NUM_BOTS = 2
-		self.bot_coordinates = []
+		
 		self.bot_paths = []
 		for i in range(self.NUM_BOTS):
-			self.bot_coordinates.append(WorldCoordinates(0, 0, 0))
+			bot_coordinates.append(WorldCoordinates(0, 0, 0))
 			self.bot_paths.append([])
 		self.current_bot = 0
 		self.maps = [Map()]
-		unique_tile_locations = {"b": None, "o": None, "p": None, "y": None, "r": None}
 		
 	def scan(self, percepts):
-		current_bot_coordinates = self.bot_coordinates[self.current_bot]
+		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		self.bot_paths[self.current_bot] = current_map.scan(percepts, current_bot_coordinates)
@@ -259,21 +268,22 @@ class NavigationManager(object):
 		# for goal tiles, try to make it replace the current route for the AI.
 		
 	def discover(self):
-		current_bot_coordinates = self.bot_coordinates[self.current_bot]
+		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		return current_map.discover(current_bot_coordinates)
 		
 	def add_frontier(self):
-		current_bot_coordinates = self.bot_coordinates[self.current_bot]
+		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		current_map.add_frontier()
 
-	def print_maps(self):
-		for map_id, i in enumerate(self.maps):
-			print(f"Map #{map_id}")
-			i.print_map()
+	def print_map(self):
+		current_bot_coordinates = bot_coordinates[self.current_bot]
+		current_bot_world = current_bot_coordinates.world
+		current_map = self.maps[current_bot_world]
+		current_map.print_map()
 
 	def next_direction(self):
 		if not self.bot_paths[self.current_bot]:
@@ -281,14 +291,17 @@ class NavigationManager(object):
 			return self.next_direction()
 		d = self.bot_paths[self.current_bot].pop(0)
 		if d == "N":
-			self.bot_coordinates[self.current_bot].y -= 1
+			bot_coordinates[self.current_bot].y -= 1
 		elif d == "E":
-			self.bot_coordinates[self.current_bot].x += 1
+			bot_coordinates[self.current_bot].x += 1
 		elif d == "S":
-			self.bot_coordinates[self.current_bot].y += 1
+			bot_coordinates[self.current_bot].y += 1
 		elif d == "W":
-			self.bot_coordinates[self.current_bot].x -= 1
+			bot_coordinates[self.current_bot].x -= 1
 		return d
 	
 	def swap_bot(self):
 		self.current_bot = (self.current_bot + 1) % self.NUM_BOTS
+		for i in bot_coordinates:
+			print(i)
+		print(self.bot_paths)

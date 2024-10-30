@@ -20,7 +20,6 @@ class AI:
         """
         self.turn = -1
         self.ai_map = navigation.NavigationManager()
-        # self.current_path = []
 
     def update(self, percepts, msg):
         """
@@ -48,26 +47,27 @@ class AI:
         """
         self.turn += 1
 
-        print(f"A received the message: {msg}")
+        if msg:
+            self.ai_map = msg
 
 # If exit is within percepts, AI ceases intelligent behavior.
         if "r" in percepts["N"]:
-            return "N"
+            return "N", self.ai_map
         if "r" in percepts["E"]:
-            return "E"
+            return "E", self.ai_map
         if "r" in percepts["S"]:
-            return "S"
+            return "S", self.ai_map
         if "r" in percepts["W"]:
-            return "W"
+            return "W", self.ai_map
         if percepts["X"][0] == "r":
-            return "U"
+            return "U", self.ai_map
         
 		# Uses percepts to add to map.
         self.ai_map.scan(percepts)
         # Figures out which tiles to prioritize.
         self.ai_map.add_frontier()
         # Displays the map.
-        self.ai_map.print_maps()
+        self.ai_map.print_map()
         # If the AI is out of directions to follow, it will generate a new set.
         # if not self.current_path:
         #     self.current_path = self.ai_map.discover()
@@ -76,5 +76,6 @@ class AI:
         # print(f"Current coordinates: {self.ai_map.robot_location}")
         # Selects the foremost direction from its current path and adjusts its position accordingly.
         d = self.ai_map.next_direction()
-        return d, None
+        self.ai_map.swap_bot()
+        return d, self.ai_map
     
