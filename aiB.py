@@ -57,16 +57,16 @@ class AI:
 
         self.turn += 1
 
-        if "r" in percepts["N"]:
-            return "N", self.ai_map
-        if "r" in percepts["E"]:
-            return "E", self.ai_map
-        if "r" in percepts["S"]:
-            return "S", self.ai_map
-        if "r" in percepts["W"]:
-            return "W", self.ai_map
-        if percepts["X"][0] == "r":
-            return "U", self.ai_map
+        # if "r" in percepts["N"]:
+        #     return "N", self.ai_map
+        # if "r" in percepts["E"]:
+        #     return "E", self.ai_map
+        # if "r" in percepts["S"]:
+        #     return "S", self.ai_map
+        # if "r" in percepts["W"]:
+        #     return "W", self.ai_map
+        # if percepts["X"][0] == "r":
+        #     return "U", self.ai_map
         
 		# Uses percepts to add to map.
         self.ai_map.scan(percepts)

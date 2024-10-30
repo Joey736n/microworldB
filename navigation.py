@@ -88,6 +88,9 @@ class Map(object):
 			for i in bot_coordinates:
 				if current_bot_position.world == i.world:
 					i.x += abs(distance)
+			for i in unique_tile_locations.values():
+				if i and current_bot_position.world == i.world:
+					i.x += abs(distance)
 		self.map_width += abs(distance)
 
 	# Expands self.tile_map along the y axis in either direction.
@@ -106,6 +109,9 @@ class Map(object):
 			# Corrects the robots position if map was expanded north.
 			for i in bot_coordinates:
 				if current_bot_position.world == i.world:
+					i.y += abs(distance)
+			for i in unique_tile_locations.values():
+				if i and current_bot_position.world == i.world:
 					i.y += abs(distance)
 		self.map_height += abs(distance)
 	
@@ -258,14 +264,62 @@ class NavigationManager(object):
 			self.bot_paths.append([])
 		self.current_bot = 0
 		self.maps = [Map()]
+		self.exited = False
 		
 	def scan(self, percepts):
 		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
-		self.bot_paths[self.current_bot] = current_map.scan(percepts, current_bot_coordinates)
+		current_map.scan(percepts, current_bot_coordinates)
 		# check percepts to find exits or portals here, and set the matching dictionary entry.
 		# for goal tiles, try to make it replace the current route for the AI.
+		for index, i in enumerate(percepts["N"]):
+			if i in "obyp":
+				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x, current_bot_coordinates.y - (index + 1))
+			if (i == "r") and not self.exited:
+				self.exited = True
+				self.bot_paths[self.current_bot] = (["N"] * (index + 1)) + ["U"]
+				return
+			elif i in string.digits:
+				self.bot_paths[self.current_bot] = (["N"] * (index + 1)) + ["U"]
+				return
+
+
+		for index, i in enumerate(percepts["E"]):
+			if i in "obyp":
+				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x + (index + 1), current_bot_coordinates.y)
+			if (i == "r") and not self.exited:
+				self.exited = True
+				self.bot_paths[self.current_bot] = (["E"] * (index + 1)) + ["U"]
+				return
+			elif i in string.digits:
+				self.bot_paths[self.current_bot] = (["E"] * (index + 1)) + ["U"]
+				return
+			
+		for index, i in enumerate(percepts["S"]):
+			if i in "obyp":
+				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x, current_bot_coordinates.y + (index + 1))
+			if (i == "r") and not self.exited:
+				self.exited = True
+				self.bot_paths[self.current_bot] = (["S"] * (index + 1)) + ["U"]
+				return
+			elif i in string.digits:
+				self.bot_paths[self.current_bot] = (["S"] * (index + 1)) + ["U"]
+				return
+
+		for index, i in enumerate(percepts["W"]):
+			if i in "obyp":
+				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x - (index + 1), current_bot_coordinates.y)
+			if (i == "r") and not self.exited:
+				self.exited = True
+				self.bot_paths[self.current_bot] = (["W"] * (index + 1)) + ["U"]
+				return
+			elif i in string.digits:
+				self.bot_paths[self.current_bot] = (["W"] * (index + 1)) + ["U"]
+				return
+
+
+
 		
 	def discover(self):
 		current_bot_coordinates = bot_coordinates[self.current_bot]
