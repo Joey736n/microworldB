@@ -198,14 +198,13 @@ class Map(object):
 	# Returns a list containing the path to the nearest frontier tile.
 	def discover(self, current_bot_position):
 		previous_coords = {} # Keeps track of the previous tiles the search has seen alongside their coordinates.
-		coord_path = [] # The list of coordinates that lead to a frontier.
 		coord_queue = [Coordinates(current_bot_position.x, current_bot_position.y)] # The coordinates that will be checked and expanded from.
 		previous_coords[self.tile_map[current_bot_position.y][current_bot_position.x]] = None # Since the search starts from where the robot is, None indicates that it is not expanded from any tile.
 		while coord_queue:
 			current_coords = coord_queue.pop(0) # Takes the coordinates from the front of the queue.
 			# If those coordinates are at a frontier tile, the loop is exited with the current coords still saved.
 			if isinstance(self.tile_map[current_coords.y][current_coords.x], Grass_Tile) and self.tile_map[current_coords.y][current_coords.x].frontier:
-				break
+				return self.get_directions(current_coords, previous_coords)
 			# The rest of the code in the loop adds neighboring tiles to the queue, and records them in previous_coords.
 			next_coords = Coordinates(current_coords.x, current_coords.y - 1)
 			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
@@ -223,11 +222,42 @@ class Map(object):
 			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
+
+		self.fully_explored = True
 		
+	def get_coord_path_from(self, start, end):
+		previous_coords = {} # Keeps track of the previous tiles the search has seen alongside their coordinates.
+		coord_queue = [Coordinates(start.x, start.y)] # The coordinates that will be checked and expanded from.
+		previous_coords[self.tile_map[start.y][start.x]] = None # Since the search starts from where the robot is, None indicates that it is not expanded from any tile.
+		while coord_queue:
+			current_coords = coord_queue.pop(0) # Takes the coordinates from the front of the queue.
+			# If those coordinates are at a frontier tile, the loop is exited with the current coords still saved.
+			if (current_coords.x == end.x) and (current_coords.y == end.y):
+				return self.get_directions(current_coords, previous_coords) + ["U"]
+			# The rest of the code in the loop adds neighboring tiles to the queue, and records them in previous_coords.
+			next_coords = Coordinates(current_coords.x, current_coords.y - 1)
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+				coord_queue.append(next_coords)
+				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
+			next_coords = Coordinates(current_coords.x + 1, current_coords.y)
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+				coord_queue.append(next_coords)
+				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
+			next_coords = Coordinates(current_coords.x, current_coords.y + 1)
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+				coord_queue.append(next_coords)
+				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
+			next_coords = Coordinates(current_coords.x - 1, current_coords.y)
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+				coord_queue.append(next_coords)
+				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
+
+	def get_directions(self, end, connections):
+		coord_path = []
 		# Uses previous_coords to trace the path from the frontier backwards to the robot.
-		while current_coords:
-			coord_path.append(current_coords)
-			current_coords = previous_coords[self.tile_map[current_coords.y][current_coords.x]]
+		while end:
+			coord_path.append(end)
+			end = connections[self.tile_map[end.y][end.x]]
 
 		coord_path = coord_path[::-1] # reverses coord_path because it's backwards.
 		directions = []
@@ -242,6 +272,7 @@ class Map(object):
 			else:
 				directions.append("W")
 		return directions
+
 	
 class WorldCoordinates(Coordinates):
 	def __init__(self, world: int, x: int, y: int):
