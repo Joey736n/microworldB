@@ -75,7 +75,7 @@ class AI:
         # print(f"Path to next frontier: {self.current_path}")
         # print(f"Current coordinates: {self.ai_map.robot_location}")
         # Selects the foremost direction from its current path and adjusts its position accordingly.
-        d = self.ai_map.next_direction()
+        d = self.ai_map.next_direction(percepts["X"][0])
         self.ai_map.swap_bot()
         return d, self.ai_map
     

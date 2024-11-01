@@ -224,6 +224,7 @@ class Map(object):
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 
 		self.fully_explored = True
+		return None
 		
 	def get_coord_path_from(self, start, end):
 		previous_coords = {} # Keeps track of the previous tiles the search has seen alongside their coordinates.
@@ -283,6 +284,8 @@ class WorldCoordinates(Coordinates):
 		return f"(w:{self.world}, x:{self.x}, y:{self.y})"
 
 unique_tile_locations = {"b": None, "o": None, "p": None, "y": None, "r": None}
+portal_uses = {"b": 0, "o": 0, "p": 0, "y": 0}
+portal_opposite = {"b": "o", "o": "b", "p": "y", "y": "p"}
 bot_coordinates = []
 
 class NavigationManager(object):
@@ -349,14 +352,22 @@ class NavigationManager(object):
 				self.bot_paths[self.current_bot] = (["W"] * (index + 1)) + ["U"]
 				return
 
-
-
-		
 	def discover(self):
 		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
-		return current_map.discover(current_bot_coordinates)
+		path = current_map.discover(current_bot_coordinates)
+		if path:
+			return path
+		viable_portals = {k:v for k,v in unique_tile_locations.items() if ((v) and (v.world == current_bot_world))}
+		if all(x.fully_explored for x in self.maps):
+			for k in viable_portals:
+				if not unique_tile_locations[portal_opposite[k]]:
+					self.maps.append(Map())
+					unique_tile_locations[portal_opposite[k]] = WorldCoordinates(len(self.maps) - 1, 0, 0)
+					return current_map.get_coord_path_from(current_bot_coordinates, viable_portals[k])
+		least_used = min(viable_portals, key=portal_uses.get)
+		return current_map.get_coord_path_from(current_bot_coordinates, viable_portals[least_used])
 		
 	def add_frontier(self):
 		current_bot_coordinates = bot_coordinates[self.current_bot]
@@ -370,10 +381,10 @@ class NavigationManager(object):
 		current_map = self.maps[current_bot_world]
 		current_map.print_map()
 
-	def next_direction(self):
+	def next_direction(self, below):
 		if not self.bot_paths[self.current_bot]:
 			self.bot_paths[self.current_bot] = self.discover()
-			return self.next_direction()
+			return self.next_direction(below)
 		d = self.bot_paths[self.current_bot].pop(0)
 		if d == "N":
 			bot_coordinates[self.current_bot].y -= 1
@@ -383,6 +394,11 @@ class NavigationManager(object):
 			bot_coordinates[self.current_bot].y += 1
 		elif d == "W":
 			bot_coordinates[self.current_bot].x -= 1
+		elif d == "U":
+			if below in "bopy":
+				bot_coordinates[self.current_bot].x = unique_tile_locations[portal_opposite[below]].x
+				bot_coordinates[self.current_bot].y = unique_tile_locations[portal_opposite[below]].y
+				bot_coordinates[self.current_bot].world = unique_tile_locations[portal_opposite[below]].world
 		return d
 	
 	def swap_bot(self):
