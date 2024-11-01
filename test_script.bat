@@ -1,2 +1,2 @@
-python main.py -w .\worlds\world_test -d 0.5 -t 800
+python main.py -w .\worlds\world2 -d 0.01 -t 1000
 pause

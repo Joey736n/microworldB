@@ -64,6 +64,8 @@ class AI:
         # print(f"Path to next frontier: {self.current_path}")
         # print(f"Current coordinates: {self.ai_map.robot_location}")
         # Selects the foremost direction from its current path and adjusts its position accordingly.
+        if self.max_turns - self.turn < 80:
+            self.ai_map.exit_check()
         d = self.ai_map.next_direction(percepts["X"][0])
         if not self.ai_map.single:
             self.ai_map.swap_bot()

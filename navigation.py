@@ -91,6 +91,8 @@ class Map(object):
 			for i in unique_tile_locations.values():
 				if i and current_bot_position.world == i.world:
 					i.x += abs(distance)
+			if exit_location and exit_location.world == current_bot_position.world:
+				exit_location.x += abs(distance)
 		self.map_width += abs(distance)
 
 	# Expands self.tile_map along the y axis in either direction.
@@ -113,6 +115,8 @@ class Map(object):
 			for i in unique_tile_locations.values():
 				if i and current_bot_position.world == i.world:
 					i.y += abs(distance)
+			if exit_location and exit_location.world == current_bot_position.world:
+				exit_location.y += abs(distance)
 		self.map_height += abs(distance)
 	
 	# Prints the map in an easy to read format.
@@ -207,19 +211,19 @@ class Map(object):
 				return self.get_directions(current_coords, previous_coords)
 			# The rest of the code in the loop adds neighboring tiles to the queue, and records them in previous_coords.
 			next_coords = Coordinates(current_coords.x, current_coords.y - 1)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 			next_coords = Coordinates(current_coords.x + 1, current_coords.y)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 			next_coords = Coordinates(current_coords.x, current_coords.y + 1)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 			next_coords = Coordinates(current_coords.x - 1, current_coords.y)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 
@@ -237,19 +241,19 @@ class Map(object):
 				return self.get_directions(current_coords, previous_coords) + ["U"]
 			# The rest of the code in the loop adds neighboring tiles to the queue, and records them in previous_coords.
 			next_coords = Coordinates(current_coords.x, current_coords.y - 1)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 			next_coords = Coordinates(current_coords.x + 1, current_coords.y)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 			next_coords = Coordinates(current_coords.x, current_coords.y + 1)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 			next_coords = Coordinates(current_coords.x - 1, current_coords.y)
-			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
+			if not isinstance(self.tile_map[next_coords.y][next_coords.x], Wall_Tile) and not isinstance(self.tile_map[next_coords.y][next_coords.x], Unknown_Tile) and self.tile_map[next_coords.y][next_coords.x] not in previous_coords.keys():
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 
@@ -283,10 +287,11 @@ class WorldCoordinates(Coordinates):
 	def __str__(self):
 		return f"(w:{self.world}, x:{self.x}, y:{self.y})"
 
-unique_tile_locations = {"b": None, "o": None, "p": None, "y": None, "r": None}
+unique_tile_locations = {"b": None, "o": None, "p": None, "y": None}
 portal_uses = {"b": 0, "o": 0, "p": 0, "y": 0}
 portal_opposite = {"b": "o", "o": "b", "p": "y", "y": "p"}
 bot_coordinates = []
+exit_location = None
 
 class NavigationManager(object):
 	def __init__(self):
@@ -306,12 +311,14 @@ class NavigationManager(object):
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		current_map.scan(percepts, current_bot_coordinates)
+		global exit_location
 		# check percepts to find exits or portals here, and set the matching dictionary entry.
 		# for goal tiles, try to make it replace the current route for the AI.
 		for index, i in enumerate(percepts["N"]):
 			if i in "obyp":
 				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x, current_bot_coordinates.y - (index + 1))
 			if (i == "r") and not self.exited:
+				exit_location = WorldCoordinates(current_bot_world, current_bot_coordinates.x, current_bot_coordinates.y - (index + 1))
 				self.exited = True
 				self.bot_paths[self.current_bot] = (["N"] * (index + 1)) + ["U"]
 				return
@@ -324,6 +331,7 @@ class NavigationManager(object):
 			if i in "obyp":
 				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x + (index + 1), current_bot_coordinates.y)
 			if (i == "r") and not self.exited:
+				exit_location = WorldCoordinates(current_bot_world, current_bot_coordinates.x + (index + 1), current_bot_coordinates.y)
 				self.exited = True
 				self.bot_paths[self.current_bot] = (["E"] * (index + 1)) + ["U"]
 				return
@@ -335,6 +343,7 @@ class NavigationManager(object):
 			if i in "obyp":
 				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x, current_bot_coordinates.y + (index + 1))
 			if (i == "r") and not self.exited:
+				exit_location = WorldCoordinates(current_bot_world, current_bot_coordinates.x, current_bot_coordinates.y + (index + 1))
 				self.exited = True
 				self.bot_paths[self.current_bot] = (["S"] * (index + 1)) + ["U"]
 				return
@@ -346,6 +355,7 @@ class NavigationManager(object):
 			if i in "obyp":
 				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x - (index + 1), current_bot_coordinates.y)
 			if (i == "r") and not self.exited:
+				exit_location = WorldCoordinates(current_bot_world, current_bot_coordinates.x - (index + 1), current_bot_coordinates.y)
 				self.exited = True
 				self.bot_paths[self.current_bot] = (["W"] * (index + 1)) + ["U"]
 				return
@@ -404,6 +414,7 @@ class NavigationManager(object):
 				bot_coordinates[self.current_bot].x = unique_tile_locations[portal_opposite[below]].x
 				bot_coordinates[self.current_bot].y = unique_tile_locations[portal_opposite[below]].y
 				bot_coordinates[self.current_bot].world = unique_tile_locations[portal_opposite[below]].world
+				portal_uses[below] += 1
 		return d
 	
 	def swap_bot(self):
@@ -411,3 +422,16 @@ class NavigationManager(object):
 		for i in bot_coordinates:
 			print(i)
 		print(self.bot_paths)
+
+	def exit_check(self):
+		if not self.single:
+			return
+		if self.bot_paths[self.current_bot]:
+			return
+		current_bot_coordinates = bot_coordinates[self.current_bot]
+		current_bot_world = current_bot_coordinates.world
+		current_map = self.maps[current_bot_world]
+		if exit_location and (exit_location.world == current_bot_world):
+			print(f"exit: {exit_location}")
+			print(f"bot: {current_bot_coordinates}")
+			self.bot_paths[self.current_bot] = current_map.get_coord_path_from(current_bot_coordinates, exit_location)
