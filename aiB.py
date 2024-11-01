@@ -78,7 +78,9 @@ class AI:
         # Displays the map.
         self.ai_map.print_map()
         # If the number of turns is running out, the AI attempts to leave.
-        if self.max_turns - self.turn < 100:
+        if self.max_turns and self.max_turns - self.turn < 100:
+            self.ai_map.exit_check()
+        elif not self.max_turns:
             self.ai_map.exit_check()
         # Gets the next movement direction.
         d = self.ai_map.next_direction(percepts["X"][0])
