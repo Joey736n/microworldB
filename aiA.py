@@ -1,12 +1,24 @@
 # NAME(S): Joe Binette
 #
 # APPROACH: [WRITE AN OVERVIEW OF YOUR APPROACH HERE.]
-#     Please use multiple lines (< ~80-100 char) for you approach write-up.
-#     Keep it readable. In other words, don't write
-#     the whole damned thing on one super long line.
+# My approach for this project was to reuse code from the previous project, and build on top of it.
+# I did this with the NavigationManager class. It uses multiple maps that represent separate, closed off sections of the entire map.
 #
-#     In-code comments DO NOT count as a description of
-#     of your approach.
+# Each new map is only accessible by using a portal.
+# For my approach to portals, my AI avoids them entirely until the current map it is in is fully explored.
+# This ensures that maps will not be duplicated because the AI can be certain if the exit portal is also in the current map.
+#
+# The first AI to discover an exit will use it as soon as possible. This acts as a safety net for if the second AI is unable to escape for whatever reason.
+# The second AI exits when it is in the exit tile's map, has no path, and the number of turns remaining is below a certain threshold.
+#
+# AIs will also attempt to immediately collect goals when seen.
+#
+# Communication of the AI takes place through the sharing of the NavigationManager object.
+# Through it, they share their known information about the state of the world.
+# This information includes the maps themselves, as well as where key locations are, and whether one of them has exited.
+# The AI's differing behavior is moreso dependent on which one finds the exit first, though B also has an initial movement delay to help separate their pathing.
+# Key locations are used to make wiser decisions about when to to use the recorded tiles. It makes it so that the AI can easily backtrack when needed.
+# Exit information allows the AIs to decide whether they should exit or not.
 
 import navigation
 
