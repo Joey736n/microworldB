@@ -51,26 +51,26 @@ class AI:
         if msg:
             self.ai_map = msg
 
-        if self.wait and percepts["X"][0] != "r":
+        # AI B stands still for a turn as soon as possible to differentiate its movement from A.
+        if self.wait and percepts["X"][0] not in "robyp":
             self.wait = False
             self.ai_map.swap_bot()
             return "U", self.ai_map
         
 		# Uses percepts to add to map.
         self.ai_map.scan(percepts)
-        # Figures out which tiles to prioritize.
+        # Figures out which tiles to prioritize. If the current map is cleared:
+		# First, if ALL maps are cleared, attempts to enter a portal that leads to a new world.
+        # Second, it attempts to enter the least-used portal that has a known destination.
         self.ai_map.add_frontier()
         # Displays the map.
         self.ai_map.print_map()
-        # Displays diagnostic information.
-        # print(f"Path to next frontier: {self.current_path}")
-        # print(f"Current coordinates: {self.ai_map.robot_location}")
-        # Selects the foremost direction from its current path and adjusts its position accordingly.
-        if self.max_turns - self.turn < 80:
+        # If the number of turns is running out, the AI attempts to leave.
+        if self.max_turns - self.turn < 100:
             self.ai_map.exit_check()
+        # Gets the next movement direction.
         d = self.ai_map.next_direction(percepts["X"][0])
+        # If the other AI hasn't left already, its turn swaps.
         if not self.ai_map.single:
             self.ai_map.swap_bot()
         return d, self.ai_map
-    
-	# when the map expands, it needs to update all agent locations, plus the unique tile locations

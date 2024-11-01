@@ -54,11 +54,13 @@ class Exit_Tile(Grass_Tile):
 		self.frontier = False
 		#🟥
 		
+# A numbered goal tile. It is identifiable on the map with a digit.
 class Goal_Tile(Grass_Tile):
 	def __init__(self, digit):
 		self.tile_marker = digit
 		self.frontier = False
 		
+# A teleporter tile. Identifiable on the map as o, b, p, or y.
 class Teleporter_Tile(Grass_Tile):
 	def __init__(self, color):
 		self.tile_marker = color
@@ -71,7 +73,7 @@ class Map(object):
 		self.map_height: int = 1
 		self.map_width: int = 1
 		self.tile_map = [[Unknown_Tile()]] # This is the 2D array that stores the bulk of mapping information.
-		self.fully_explored: bool = False
+		self.fully_explored: bool = False # When the map is fully explored (no more frontiers), this is set to true.
 
 	# Expands self.tile_map along the x axis in either direction.
 	# Negative values expand West, positive values expand East.
@@ -83,7 +85,7 @@ class Map(object):
 			# Case for negative values. Expands the map West by {distance} tiles.
 			elif distance < 0:
 				self.tile_map[index] = ([Unknown_Tile()] * abs(distance)) + row
-		# Corrects the robot's position if the map was expanded on the West.
+		# Corrects all positions on the map if the map was expanded on the West.
 		if distance < 0:
 			for i in bot_coordinates:
 				if current_bot_position.world == i.world:
@@ -108,7 +110,7 @@ class Map(object):
 		# Adds tiles at the north if distance is negative.
 		elif distance < 0:
 			self.tile_map = new_space + self.tile_map
-			# Corrects the robots position if map was expanded north.
+			# Corrects all positions on the map if map was expanded north.
 			for i in bot_coordinates:
 				if current_bot_position.world == i.world:
 					i.y += abs(distance)
@@ -139,7 +141,7 @@ class Map(object):
 		elif character in "obpy":
 			return Teleporter_Tile(character)
 	
-	# Adds newly discovered tiles to the map. This one's a whopper.
+	# Adds newly discovered tiles to the map.
 	def scan(self, percepts, current_bot_position):
 		robot_x = current_bot_position.x
 		robot_y = current_bot_position.y
@@ -230,13 +232,14 @@ class Map(object):
 		self.fully_explored = True
 		return None
 		
+	# Finds the coordinates that lead from the start to end, then converts them to bot-readable directions.
 	def get_coord_path_from(self, start, end):
 		previous_coords = {} # Keeps track of the previous tiles the search has seen alongside their coordinates.
 		coord_queue = [Coordinates(start.x, start.y)] # The coordinates that will be checked and expanded from.
 		previous_coords[self.tile_map[start.y][start.x]] = None # Since the search starts from where the robot is, None indicates that it is not expanded from any tile.
 		while coord_queue:
 			current_coords = coord_queue.pop(0) # Takes the coordinates from the front of the queue.
-			# If those coordinates are at a frontier tile, the loop is exited with the current coords still saved.
+			# If the correct coordinates are found, the loop is exited with the current coords still saved.
 			if (current_coords.x == end.x) and (current_coords.y == end.y):
 				return self.get_directions(current_coords, previous_coords) + ["U"]
 			# The rest of the code in the loop adds neighboring tiles to the queue, and records them in previous_coords.
@@ -257,6 +260,7 @@ class Map(object):
 				coord_queue.append(next_coords)
 				previous_coords[self.tile_map[next_coords.y][next_coords.x]] = current_coords
 
+	# Converts a list of coordinates to usable bot directions.
 	def get_directions(self, end, connections):
 		coord_path = []
 		# Uses previous_coords to trace the path from the frontier backwards to the robot.
@@ -278,7 +282,7 @@ class Map(object):
 				directions.append("W")
 		return directions
 
-	
+# Extended Coordinates class that includes the map the object is located in.	
 class WorldCoordinates(Coordinates):
 	def __init__(self, world: int, x: int, y: int):
 		super().__init__(x, y)
@@ -287,33 +291,35 @@ class WorldCoordinates(Coordinates):
 	def __str__(self):
 		return f"(w:{self.world}, x:{self.x}, y:{self.y})"
 
-unique_tile_locations = {"b": None, "o": None, "p": None, "y": None}
-portal_uses = {"b": 0, "o": 0, "p": 0, "y": 0}
-portal_opposite = {"b": "o", "o": "b", "p": "y", "y": "p"}
-bot_coordinates = []
-exit_location = None
+# Global variables
+unique_tile_locations = {"b": None, "o": None, "p": None, "y": None} # Where each of the portals is.
+portal_uses = {"b": 0, "o": 0, "p": 0, "y": 0} # How many times each portal has been used.
+portal_opposite = {"b": "o", "o": "b", "p": "y", "y": "p"} # A dict to convert a portal to its opposite.
+bot_coordinates = [] # Keeps track of where each bot is.
+exit_location = None # Keeps track of where the exit is.
 
+# A class built on top of the map class. Manages multiple maps.
 class NavigationManager(object):
 	def __init__(self):
-		self.NUM_BOTS = 2
-		
-		self.bot_paths = []
+		self.NUM_BOTS = 2 # How many bots are in use.
+		self.bot_paths = [] # The current paths each bot is taking.
+		# Fills each list with the number of coordinates and paths needed.
 		for i in range(self.NUM_BOTS):
 			bot_coordinates.append(WorldCoordinates(0, 0, 0))
 			self.bot_paths.append([])
-		self.current_bot = 0
-		self.maps = [Map()]
-		self.single = False
-		self.exited = False
+		self.current_bot = 0 # The bot that is being used. Corresponds with its indices.
+		self.maps = [Map()] # Initializes a single map.
+		self.single = False # True if there is only one bot left.
+		self.exited = False # True is one of the bots has started exiting.
 		
+	# Maps out the area around the bot.
 	def scan(self, percepts):
 		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		current_map.scan(percepts, current_bot_coordinates)
 		global exit_location
-		# check percepts to find exits or portals here, and set the matching dictionary entry.
-		# for goal tiles, try to make it replace the current route for the AI.
+		# Each direction is checked for important tiles. If it's something that should be used immediately, it pathfinds to it.
 		for index, i in enumerate(percepts["N"]):
 			if i in "obyp":
 				unique_tile_locations[i] = WorldCoordinates(current_bot_world, current_bot_coordinates.x, current_bot_coordinates.y - (index + 1))
@@ -363,36 +369,43 @@ class NavigationManager(object):
 				self.bot_paths[self.current_bot] = (["W"] * (index + 1)) + ["U"]
 				return
 
+	# Tells the bot where to go in order to find new tiles.
 	def discover(self):
 		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
+		# Attempts to find a frontier in the current map.
 		path = current_map.discover(current_bot_coordinates)
 		if path:
 			return path
+		# If the AI was unable to find a frontier in the current map, it decides upon a portal to use.
 		viable_portals = {k:v for k,v in unique_tile_locations.items() if ((v) and (v.world == current_bot_world))}
+		# First, it tries to enter a portal that leads to a new map, but only if all of the current maps are fully explored.
 		if all(x.fully_explored for x in self.maps):
 			for k in viable_portals:
 				if not unique_tile_locations[portal_opposite[k]]:
 					self.maps.append(Map())
 					unique_tile_locations[portal_opposite[k]] = WorldCoordinates(len(self.maps) - 1, 0, 0)
 					return current_map.get_coord_path_from(current_bot_coordinates, viable_portals[k])
+		# If it will not use a portal to a new map, it will instead go to the least used portal in its world.
 		least_used = min(viable_portals, key=portal_uses.get)
 		return current_map.get_coord_path_from(current_bot_coordinates, viable_portals[least_used])
 		
+	# Adds frontiers to the current map.
 	def add_frontier(self):
-		print(f"ACTIVE BOT: {self.current_bot}")
 		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		current_map.add_frontier()
 
+	# Prints the current map.
 	def print_map(self):
 		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		current_map.print_map()
 
+	# Pops from the bot's navigation lists. If it can't do that, it first generates a list.
 	def next_direction(self, below):
 		if not self.bot_paths[self.current_bot]:
 			self.bot_paths[self.current_bot] = self.discover()
@@ -406,6 +419,7 @@ class NavigationManager(object):
 			bot_coordinates[self.current_bot].y += 1
 		elif d == "W":
 			bot_coordinates[self.current_bot].x -= 1
+		# For cases where the next step is "U", the bot makes necessary adjustments to the game state.
 		elif d == "U":
 			if below == "r":
 				self.single = True
@@ -417,12 +431,14 @@ class NavigationManager(object):
 				portal_uses[below] += 1
 		return d
 	
+	# Swaps the bot's turn, so that the proper index is used.
 	def swap_bot(self):
 		self.current_bot = (self.current_bot + 1) % self.NUM_BOTS
 		for i in bot_coordinates:
 			print(i)
 		print(self.bot_paths)
 
+	# Navigates the bot to the exit when the bot is in the exit's map.
 	def exit_check(self):
 		if not self.single:
 			return
@@ -432,6 +448,4 @@ class NavigationManager(object):
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
 		if exit_location and (exit_location.world == current_bot_world):
-			print(f"exit: {exit_location}")
-			print(f"bot: {current_bot_coordinates}")
 			self.bot_paths[self.current_bot] = current_map.get_coord_path_from(current_bot_coordinates, exit_location)
