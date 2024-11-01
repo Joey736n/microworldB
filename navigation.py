@@ -298,6 +298,7 @@ class NavigationManager(object):
 			self.bot_paths.append([])
 		self.current_bot = 0
 		self.maps = [Map()]
+		self.single = False
 		self.exited = False
 		
 	def scan(self, percepts):
@@ -370,6 +371,7 @@ class NavigationManager(object):
 		return current_map.get_coord_path_from(current_bot_coordinates, viable_portals[least_used])
 		
 	def add_frontier(self):
+		print(f"ACTIVE BOT: {self.current_bot}")
 		current_bot_coordinates = bot_coordinates[self.current_bot]
 		current_bot_world = current_bot_coordinates.world
 		current_map = self.maps[current_bot_world]
@@ -395,7 +397,10 @@ class NavigationManager(object):
 		elif d == "W":
 			bot_coordinates[self.current_bot].x -= 1
 		elif d == "U":
-			if below in "bopy":
+			if below == "r":
+				self.single = True
+				self.swap_bot()
+			elif below in "bopy":
 				bot_coordinates[self.current_bot].x = unique_tile_locations[portal_opposite[below]].x
 				bot_coordinates[self.current_bot].y = unique_tile_locations[portal_opposite[below]].y
 				bot_coordinates[self.current_bot].world = unique_tile_locations[portal_opposite[below]].world

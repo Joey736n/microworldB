@@ -8,7 +8,6 @@
 #     In-code comments DO NOT count as a description of
 #     of your approach.
 
-import random
 import navigation
 
 
@@ -18,6 +17,7 @@ class AI:
         Called once before the sim starts. You may use this function
         to initialize any data or data structures you need.
         """
+        self.max_turns = max_turns
         self.turn = -1
         self.ai_map = navigation.NavigationManager()
 
@@ -46,21 +46,10 @@ class AI:
         The same goes for goal hexes (0, 1, 2, 3, 4, 5, 6, 7, 8, 9).
         """
         self.turn += 1
+        print(f"message: {msg}")
 
         if msg:
             self.ai_map = msg
-
-# If exit is within percepts, AI ceases intelligent behavior.
-        # if "r" in percepts["N"]:
-        #     return "N", self.ai_map
-        # if "r" in percepts["E"]:
-        #     return "E", self.ai_map
-        # if "r" in percepts["S"]:
-        #     return "S", self.ai_map
-        # if "r" in percepts["W"]:
-        #     return "W", self.ai_map
-        # if percepts["X"][0] == "r":
-        #     return "U", self.ai_map
         
 		# Uses percepts to add to map.
         self.ai_map.scan(percepts)
@@ -76,6 +65,7 @@ class AI:
         # print(f"Current coordinates: {self.ai_map.robot_location}")
         # Selects the foremost direction from its current path and adjusts its position accordingly.
         d = self.ai_map.next_direction(percepts["X"][0])
-        self.ai_map.swap_bot()
+        if not self.ai_map.single:
+            self.ai_map.swap_bot()
         return d, self.ai_map
     
